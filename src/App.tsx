@@ -3,7 +3,7 @@ import { messaging } from "./firebaseConfig"
 import { getToken, onMessage } from "firebase/messaging"
 import "./App.css"
 
-const API_URL = "http://localhost:8080"
+const API_URL = "https://my-pwa-server.onrender.com"
 
 const App: React.FC = () => {
   const [log, setLog] = useState<string[]>([])
