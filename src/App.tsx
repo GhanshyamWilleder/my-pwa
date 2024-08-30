@@ -153,7 +153,7 @@ const App: React.FC = () => {
         <button onClick={requestNotifyPermission}>Allow Notifications</button>
       )}
       {!isLoading && <p>Loading...</p>}
-      {!isLoading && !token && <p>unable to generate token</p>}
+      {isLoading && !token && <p>unable to generate token</p>}
       {isLoading && isNotificationAllowed && token && (
         <>
           {" "}
