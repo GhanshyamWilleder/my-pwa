@@ -3,7 +3,7 @@ import { messaging } from "./firebaseConfig"
 import { getToken, onMessage } from "firebase/messaging"
 import "./App.css"
 
-const API_URL = "http://localhost:8080"
+const API_URL = "https://my-pwa-server.onrender.com"
 
 const App: React.FC = () => {
   const [log, setLog] = useState<string[]>([])
@@ -11,65 +11,39 @@ const App: React.FC = () => {
   const [isNotificationAllowed, setIsNotificationAllowed] = useState<
     boolean | null
   >(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   useEffect(() => {
-    const checkServiceWorker = async () => {
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration()
-        if (registration) {
-          requestNotifyPermission()
-          setLog((prevLog) => [
-            ...prevLog,
-            "Service Worker is already registered",
-          ])
-        } else {
-          try {
-            const newRegistration = await navigator.serviceWorker.register(
-              "/firebase-messaging-sw.js",
-              { type: "module" }
-            )
-            setLog((prevLog) => [
-              ...prevLog,
-              "Service Worker registered with scope: " + newRegistration.scope,
-            ])
-          } catch (error) {
-            setLog((prevLog) => [
-              ...prevLog,
-              `Service Worker registration failed: ${error}`,
-            ])
-          }
-        }
-      } else {
-        setLog((prevLog) => [
-          ...prevLog,
-          "Service Worker is not supported in this browser.",
-        ])
-      }
-    }
-
-    checkServiceWorker()
+    setTimeout(() => {
+      requestNotifyPermission()
+    }, 10000)
   }, [])
 
   const requestNotifyPermission = async () => {
     try {
       // Explicitly request notification permission
-      const permission = await Notification.requestPermission()
-
-      if (permission === "granted") {
+      const permission = await Notification.permission
+      console.log("1")
+      if (permission === "granted" && "serviceWorker" in navigator) {
+        setIsNotificationAllowed(true)
+        setIsLoading(true)
         console.log("Notification permission granted.")
+        console.log("2")
         const token = await getToken(messaging, {
           vapidKey:
             "BALkZgzM8z3Ze7XiWZe5jZCuKTsprDFdfjj8VghYgInmn97oUM6uRRPpfptEICcmg5v64mSZ8-rdeiiCe_WPHWo",
         })
         if (token) {
           setToken(token)
-          setIsNotificationAllowed(true)
           setLog((prevLog) => [
             ...prevLog,
             `Notification permission granted. Token: ${token}`,
           ])
         } else {
-          setLog((prevLog) => [...prevLog, "No registration token available."])
+          setLog((prevLog) => [
+            ...prevLog,
+            "Notification permission granted, but unable to get token.",
+          ])
         }
       } else if (permission === "denied") {
         setIsNotificationAllowed(false)
@@ -79,7 +53,6 @@ const App: React.FC = () => {
         setLog((prevLog) => [...prevLog, "Notification permission dismissed."])
       }
     } catch (error) {
-      setIsNotificationAllowed(false)
       setLog((prevLog) => [
         ...prevLog,
         `Error requesting notification permission: ${error}`,
@@ -179,9 +152,15 @@ const App: React.FC = () => {
       {isNotificationAllowed === false && (
         <button onClick={requestNotifyPermission}>Allow Notifications</button>
       )}
-      <button onClick={sendNotification}>Send Notification</button>
-      <button onClick={subscribe}>Subscribe</button>
-      <button onClick={unsubscribe}>Unsubscribe</button>
+      {!isLoading && <p>Loading...</p>}
+      {isLoading && isNotificationAllowed && (
+        <>
+          {" "}
+          <button onClick={sendNotification}>Send Notification</button>
+          <button onClick={subscribe}>Subscribe</button>
+          <button onClick={unsubscribe}>Unsubscribe</button>
+        </>
+      )}
       <div>
         <h2>Logs</h2>
         <ul>
